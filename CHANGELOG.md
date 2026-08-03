@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 - Milestone 3
+
+- Added reproducible seeding for Python, NumPy, PyTorch, and MONAI.
+- Added a binary training engine with BCEWithLogitsLoss and AdamW.
+- Added validation ROC-AUC model selection and early stopping.
+- Added checkpoint and epoch-history export.
+- Added paired original/WhatsApp prediction and metric export for one held-out fold.
+- Added an optional PyTorch smoke test for the training engine.
+
 ## 0.2.0 - Milestone 2
 
 - Added safe 2-D grayscale image loading.
