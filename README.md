@@ -4,35 +4,19 @@ Reproducible research pipeline for paired evaluation of original and WhatsApp-co
 
 ## Project status
 
-This repository is being rebuilt from the ground up. The current milestone provides:
+Milestone 2 provides:
 
-- a privacy-preserving dataset manifest specification;
-- strict manifest validation;
-- patient-grouped, stratified cross-validation folds;
-- basic binary-classification metrics;
-- automated tests and continuous integration.
+- a privacy-preserving paired-image manifest;
+- strict validation and patient-grouped stratified folds;
+- safe 2-D grayscale image loading;
+- condition-specific and paired datasets;
+- MONAI preprocessing and training-only augmentation;
+- a model factory for ResNet, DenseNet, and EfficientNet;
+- synthetic non-clinical data for smoke tests;
+- similarity-based candidate generation for unnamed image folders;
+- basic diagnostic metrics and automated tests.
 
-Training, paired statistical inference, figure generation, and the final manuscript tables will be added in subsequent milestones. No clinical images or patient identifiers belong in this repository.
-
-## Data model
-
-Create a local CSV manifest based on `data/metadata.example.csv`:
-
-```csv
-case_id,patient_id,original_path,whatsapp_path,label,side
-case_001,patient_001,data/private/original/image_001.jpg,data/private/whatsapp/image_a.jpg,1,right
-case_002,patient_002,data/private/original/image_002.jpg,data/private/whatsapp/image_b.jpg,0,left
-```
-
-Required columns:
-
-- `case_id`: anonymous unique case identifier;
-- `patient_id`: anonymous patient/group identifier used to prevent leakage;
-- `original_path`: path to the original radiograph;
-- `whatsapp_path`: path to the paired WhatsApp-compressed image;
-- `label`: reference-standard class (`0` or `1`).
-
-The optional `side` column can be used when left and right third molars are separate cases.
+The definitive experiments, paired confidence intervals, model-training loop, out-of-fold prediction export, and manuscript figures remain future milestones. No clinical images or direct identifiers belong in this repository.
 
 ## Installation
 
@@ -42,37 +26,73 @@ cd monai-wpp-reproducible
 python -m venv .venv
 ```
 
-Activate the environment and install the project:
+Activate the environment and install either the lightweight validation tools:
 
 ```bash
 pip install -e ".[dev]"
 ```
 
-The dependency ranges are provisional during the reconstruction phase. Exact versions will be frozen before the definitive experiments.
-
-## Validate a manifest
+or the complete research environment:
 
 ```bash
-python scripts/validate_dataset.py \
-  --manifest data/metadata.example.csv \
-  --root . \
-  --skip-file-check
+pip install -e ".[all]"
 ```
 
-Remove `--skip-file-check` when validating the real local dataset.
+Dependency ranges are provisional. Exact versions will be frozen before definitive experiments.
 
-## Create grouped cross-validation folds
+## Data model
+
+Create a local CSV based on `data/metadata.example.csv`:
+
+```csv
+case_id,patient_id,original_path,whatsapp_path,label,side
+case_001,patient_001,data/private/original/image_001.jpg,data/private/whatsapp/image_a.jpg,1,right
+```
+
+`patient_id` is mandatory because folds must be grouped by patient. If left and right third molars are separate observations, use one row per side but keep the same `patient_id`.
+
+## Generate a non-clinical smoke-test dataset
+
+```bash
+python scripts/generate_synthetic_data.py --output data/synthetic --n-cases 20
+python scripts/validate_dataset.py --manifest data/synthetic/metadata.csv --root data/synthetic
+```
+
+Synthetic images are geometric test patterns and must never be interpreted as clinical examples.
+
+## Create grouped folds
 
 ```bash
 python scripts/create_folds.py \
-  --manifest data/metadata.example.csv \
+  --manifest data/synthetic/metadata.csv \
+  --root data/synthetic \
   --output outputs/folds.csv \
-  --n-splits 2 \
-  --seed 42 \
-  --skip-file-check
+  --n-splits 5 \
+  --seed 42
 ```
 
-For the final dataset, the planned default is five patient-grouped stratified folds, subject to verification of the number of independent patients and class distribution.
+## Suggest pairs for unnamed folders
+
+```bash
+python scripts/suggest_pairs.py \
+  --original-dir /protected/path/original \
+  --whatsapp-dir /protected/path/whatsapp \
+  --output outputs/pair_candidates.csv \
+  --top-k 3
+```
+
+The similarity tool only ranks candidates. A qualified researcher must manually confirm every final original/WhatsApp pairing.
+
+## Experiment design
+
+The first primary experiment is configured as `train_original_evaluate_paired`:
+
+1. training and model selection use original images only within each training fold;
+2. the held-out cases are evaluated in both original and WhatsApp conditions;
+3. the same trained model, threshold, and held-out cases are used for both conditions;
+4. case-level out-of-fold probabilities will support paired statistical tests.
+
+A later secondary experiment may train separate models for each condition, but its interpretation must remain distinct.
 
 ## Run tests
 
@@ -80,13 +100,16 @@ For the final dataset, the planned default is five patient-grouped stratified fo
 pytest
 ```
 
+Tests requiring MONAI are skipped when optional training dependencies are absent.
+
 ## Research safeguards
 
 - Never commit radiographs, direct identifiers, clinical metadata, or unapproved derived data.
-- Split data by `patient_id`, not by image file, crop, tooth, or augmented sample.
-- Apply augmentation only within the training partition.
-- Preserve paired original/WhatsApp observations in the same fold.
-- Generate manuscript tables and figures directly from saved out-of-fold predictions.
+- Split by `patient_id`, never by image, crop, tooth, or augmented sample.
+- Apply random augmentation only to training partitions.
+- Keep original and WhatsApp counterparts in the same fold.
+- Never use similarity scores as final pair labels without manual confirmation.
+- Generate final tables and figures directly from saved out-of-fold predictions.
 
 ## License
 

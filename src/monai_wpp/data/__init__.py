@@ -1,1 +1,1 @@
-"""Dataset manifest and splitting utilities."""
+"""Dataset manifest, loading, matching, and splitting utilities."""

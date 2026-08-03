@@ -1,6 +1,7 @@
 experiment:
   name: paired_original_whatsapp_cv
   seed: 42
+  design: train_original_evaluate_paired
 
 cross_validation:
   n_splits: 5
@@ -9,7 +10,7 @@ cross_validation:
 
 model:
   architecture: resnet18
-  pretrained: true
+  pretrained: false
   spatial_dims: 2
   input_channels: 1
   num_classes: 1

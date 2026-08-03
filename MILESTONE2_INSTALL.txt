@@ -1,0 +1,18 @@
+Milestone 2 update
+
+Copy the CONTENTS of this monai-wpp-reproducible directory into the root of your GitHub repository, allowing existing files to be replaced.
+
+New capabilities:
+- 2-D grayscale image loading
+- paired and condition-specific datasets
+- MONAI transforms and model factory
+- synthetic smoke-test data
+- unnamed-folder pair candidate suggestions
+- expanded tests and CI workflow
+
+After copying, run:
+  python -m pip install -e ".[dev]"
+  pytest
+
+For training dependencies:
+  python -m pip install -e ".[all]"
