@@ -1,0 +1,5 @@
+case_id,patient_id,original_path,label,tooth,side
+case_001_left,patient_001,data/private/original/patient_001.jpg,1,38,left
+case_001_right,patient_001,data/private/original/patient_001.jpg,0,48,right
+case_002_left,patient_002,data/private/original/patient_002.jpg,0,38,left
+case_003_right,patient_003,data/private/original/patient_003.jpg,1,48,right
