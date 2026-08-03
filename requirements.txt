@@ -1,0 +1,3 @@
+# Convenience installation file for the reconstruction phase.
+# Exact versions will be frozen before definitive experiments.
+-e .[training,stats]

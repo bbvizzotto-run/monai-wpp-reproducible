@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "monai-wpp-reproducible"
+version = "0.1.0"
+description = "Reproducible paired evaluation pipeline for original and WhatsApp-compressed panoramic radiographs"
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+license = { text = "MIT" }
+authors = [
+  { name = "Bruno Boessio Vizzotto" }
+]
+dependencies = [
+  "numpy>=1.26,<3",
+  "pandas>=2.1,<3",
+  "scikit-learn>=1.3,<2",
+  "PyYAML>=6,<7",
+]
+
+[project.optional-dependencies]
+training = [
+  "torch>=2.2,<3",
+  "monai>=1.3,<2",
+  "pillow>=10,<12",
+]
+stats = [
+  "scipy>=1.11,<2",
+  "statsmodels>=0.14,<1",
+]
+dev = [
+  "pytest>=8,<10",
+  "ruff>=0.6,<1",
+]
+all = [
+  "monai-wpp-reproducible[training,stats,dev]",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

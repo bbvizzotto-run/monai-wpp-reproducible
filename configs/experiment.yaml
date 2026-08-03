@@ -1,0 +1,38 @@
+experiment:
+  name: paired_original_whatsapp_cv
+  seed: 42
+
+cross_validation:
+  n_splits: 5
+  group_column: patient_id
+  stratify_column: label
+
+model:
+  architecture: resnet18
+  pretrained: true
+  spatial_dims: 2
+  input_channels: 1
+  num_classes: 1
+
+training:
+  epochs: 100
+  batch_size: 16
+  learning_rate: 0.0001
+  early_stopping_patience: 15
+  selection_metric: validation_auc
+
+image:
+  height: 224
+  width: 224
+
+augmentation:
+  rotation_degrees: 15
+  horizontal_flip_probability: 0.5
+  translation_fraction: 0.10
+  contrast_probability: 0.30
+  intensity_shift_probability: 0.30
+
+evaluation:
+  classification_threshold: 0.5
+  bootstrap_iterations: 2000
+  confidence_level: 0.95

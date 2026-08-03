@@ -1,0 +1,5 @@
+case_id,patient_id,original_path,whatsapp_path,label,side
+case_001,patient_001,data/private/original/image_001.jpg,data/private/whatsapp/image_a.jpg,1,right
+case_002,patient_002,data/private/original/image_002.jpg,data/private/whatsapp/image_b.jpg,0,left
+case_003,patient_003,data/private/original/image_003.jpg,data/private/whatsapp/image_c.jpg,1,left
+case_004,patient_004,data/private/original/image_004.jpg,data/private/whatsapp/image_d.jpg,0,right
