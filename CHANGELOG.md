@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0 - Milestone 4
+
+- Added validation for original-only tooth-level clinical case metadata.
+- Allowed bilateral teeth from the same patient to share one panoramic source path.
+- Rejected cross-patient source duplication and tooth/side inconsistencies.
+- Added deterministic patient-grouped clinical fold preparation.
+- Added fold summaries, patient indexes, and WhatsApp transmission-log templates.
+- Added tests for the private clinical preparation workflow.
+
 ## 0.3.0 - Milestone 3
 
 - Added reproducible seeding for Python, NumPy, PyTorch, and MONAI.
