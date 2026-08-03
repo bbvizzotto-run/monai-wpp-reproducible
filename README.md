@@ -4,10 +4,13 @@ Reproducible research pipeline for paired evaluation of original and WhatsApp-co
 
 ## Project status
 
-Milestone 3 provides:
+Milestone 4 provides:
 
 - a privacy-preserving paired-image manifest;
-- strict validation and patient-grouped stratified folds;
+- validation for original-only tooth-level clinical metadata;
+- strict patient-grouped stratified folds;
+- support for bilateral teeth sharing one panoramic source image;
+- fold summaries, patient indexes, and WhatsApp transmission-log templates;
 - safe 2-D grayscale image loading;
 - condition-specific and paired datasets;
 - MONAI preprocessing and training-only augmentation;
@@ -19,7 +22,7 @@ Milestone 3 provides:
 - similarity-based candidate generation for unnamed image folders;
 - automated tests.
 
-Five-fold orchestration, paired confidence intervals, calibration analysis, and manuscript figures remain future milestones. No clinical images or direct identifiers belong in this repository.
+ROI validation, controlled WhatsApp acquisition, five-fold training orchestration, paired confidence intervals, calibration analysis, and manuscript figures remain future milestones. No clinical images, direct identifiers, or private clinical manifests belong in this repository.
 
 ## Installation
 
@@ -45,7 +48,7 @@ Dependency ranges are provisional. Exact versions will be frozen before definiti
 
 ## Data model
 
-Create a local CSV based on `data/metadata.example.csv`:
+Create a local paired CSV based on `data/metadata.example.csv`:
 
 ```csv
 case_id,patient_id,original_path,whatsapp_path,label,side
@@ -53,6 +56,34 @@ case_001,patient_001,data/private/original/image_001.jpg,data/private/whatsapp/i
 ```
 
 `patient_id` is mandatory because folds must be grouped by patient. If left and right third molars are separate observations, use one row per side but keep the same `patient_id`.
+
+Before WhatsApp images exist, create a private original-only CSV based on `data/clinical_cases.example.csv`:
+
+```csv
+case_id,patient_id,original_path,label,tooth,side
+case_001_left,patient_001,data/private/original/patient_001.jpg,1,38,left
+case_001_right,patient_001,data/private/original/patient_001.jpg,0,48,right
+```
+
+Two bilateral cases from the same patient may share one `original_path`. The same source path must never be shared by different patients.
+
+## Prepare original-only clinical metadata
+
+The clinical preparation command validates the tooth-level case table, creates deterministic patient-grouped folds, summarizes each fold, and can emit a patient index plus one WhatsApp transmission-log row per complete panoramic radiograph.
+
+```bash
+python scripts/prepare_clinical_folds.py \
+  --cases /protected/project/cases_original_only.csv \
+  --root /protected/project \
+  --output /protected/project/clinical_cases_folds.csv \
+  --summary-output /protected/project/fold_summary.csv \
+  --patient-index-output /protected/project/patient_index.csv \
+  --whatsapp-log-output /protected/project/whatsapp_transmission_log.csv \
+  --n-splits 5 \
+  --seed 42
+```
+
+These outputs contain private clinical metadata and should remain outside the public repository. Fold assignment must be frozen before definitive model training.
 
 ## Generate a non-clinical smoke-test dataset
 
