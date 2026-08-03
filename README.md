@@ -4,7 +4,7 @@ Reproducible research pipeline for paired evaluation of original and WhatsApp-co
 
 ## Project status
 
-Milestone 2 provides:
+Milestone 3 provides:
 
 - a privacy-preserving paired-image manifest;
 - strict validation and patient-grouped stratified folds;
@@ -13,10 +13,12 @@ Milestone 2 provides:
 - MONAI preprocessing and training-only augmentation;
 - a model factory for ResNet, DenseNet, and EfficientNet;
 - synthetic non-clinical data for smoke tests;
+- one-fold training with AdamW, BCEWithLogitsLoss, and early stopping;
+- checkpoint, history, metrics, and paired prediction export;
 - similarity-based candidate generation for unnamed image folders;
-- basic diagnostic metrics and automated tests.
+- automated tests.
 
-The definitive experiments, paired confidence intervals, model-training loop, out-of-fold prediction export, and manuscript figures remain future milestones. No clinical images or direct identifiers belong in this repository.
+Five-fold orchestration, paired confidence intervals, calibration analysis, and manuscript figures remain future milestones. No clinical images or direct identifiers belong in this repository.
 
 ## Installation
 
@@ -66,10 +68,42 @@ Synthetic images are geometric test patterns and must never be interpreted as cl
 python scripts/create_folds.py \
   --manifest data/synthetic/metadata.csv \
   --root data/synthetic \
-  --output outputs/folds.csv \
+  --output outputs/folds.synthetic.csv \
   --n-splits 5 \
   --seed 42
 ```
+
+Every retained fold must contain both classes, and all rows from the same patient must remain in one fold.
+
+## Train one fold
+
+The primary design trains on original images and uses original validation images for model selection. The selected model is then applied to the paired original and WhatsApp images from the same held-out cases.
+
+```bash
+python scripts/train_fold.py \
+  --manifest outputs/folds.synthetic.csv \
+  --root data/synthetic \
+  --fold 0 \
+  --output-dir outputs/training \
+  --architecture resnet18 \
+  --epochs 5 \
+  --batch-size 4 \
+  --learning-rate 0.0001 \
+  --patience 3 \
+  --device auto
+```
+
+The command creates:
+
+```text
+outputs/training/fold_0/best_model.pt
+outputs/training/fold_0/best_model.json
+outputs/training/fold_0/history.csv
+outputs/training/fold_0/predictions.csv
+outputs/training/fold_0/metrics.json
+```
+
+Results obtained from the synthetic dataset are only software smoke tests and have no clinical or scientific interpretation.
 
 ## Suggest pairs for unnamed folders
 
@@ -85,7 +119,7 @@ The similarity tool only ranks candidates. A qualified researcher must manually 
 
 ## Experiment design
 
-The first primary experiment is configured as `train_original_evaluate_paired`:
+The primary experiment is `train_original_evaluate_paired`:
 
 1. training and model selection use original images only within each training fold;
 2. the held-out cases are evaluated in both original and WhatsApp conditions;
@@ -100,7 +134,7 @@ A later secondary experiment may train separate models for each condition, but i
 pytest
 ```
 
-Tests requiring MONAI are skipped when optional training dependencies are absent.
+Tests requiring PyTorch or MONAI are skipped when optional training dependencies are absent.
 
 ## Research safeguards
 
@@ -108,6 +142,7 @@ Tests requiring MONAI are skipped when optional training dependencies are absent
 - Split by `patient_id`, never by image, crop, tooth, or augmented sample.
 - Apply random augmentation only to training partitions.
 - Keep original and WhatsApp counterparts in the same fold.
+- Use original validation images only for early stopping in the primary experiment.
 - Never use similarity scores as final pair labels without manual confirmation.
 - Generate final tables and figures directly from saved out-of-fold predictions.
 
