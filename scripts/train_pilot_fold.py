@@ -34,6 +34,7 @@ PILOT_CONFIG = {
     "inner_splits": 4,
     "inner_fold": 0,
     "seed": 42,
+    "split_seed": 42,
 }
 
 
@@ -47,6 +48,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--device", choices=("auto", "cpu", "cuda"), default="auto")
     parser.add_argument("--epochs", type=int, default=PILOT_CONFIG["epochs"])
     parser.add_argument("--batch-size", type=int, default=PILOT_CONFIG["batch_size"])
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=PILOT_CONFIG["seed"],
+        help="Training/augmentation seed. Use 42 for the primary run.",
+    )
+    parser.add_argument(
+        "--split-seed",
+        type=int,
+        default=PILOT_CONFIG["split_seed"],
+        help="Seed that freezes the grouped inner validation partition.",
+    )
     return parser.parse_args()
 
 
@@ -127,6 +140,8 @@ def main() -> int:
             **PILOT_CONFIG,
             "epochs": int(args.epochs),
             "batch_size": int(args.batch_size),
+            "seed": int(args.seed),
+            "split_seed": int(args.split_seed),
         },
         "environment": environment_metadata(),
         "outer_fold": int(args.fold),
@@ -167,7 +182,9 @@ def main() -> int:
             "--threshold",
             str(PILOT_CONFIG["threshold"]),
             "--seed",
-            str(PILOT_CONFIG["seed"]),
+            str(args.seed),
+            "--split-seed",
+            str(args.split_seed),
             "--inner-splits",
             str(PILOT_CONFIG["inner_splits"]),
             "--inner-fold",
