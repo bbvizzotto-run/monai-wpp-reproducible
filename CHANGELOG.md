@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0 - Milestone 5
+
+- Added ImageNet transfer learning for ResNet-18, ResNet-50, and ResNet-101 through torchvision.
+- Added deterministic grayscale adaptation by averaging pretrained RGB kernels in the first convolution.
+- Added a frozen ResNet-18 outer-fold pilot runner with conservative augmentation.
+- Added environment and pilot-configuration metadata export.
+- Documented the private Colab pilot workflow.
+
 ## 0.4.0 - Milestone 4
 
 - Added validation for original-only tooth-level clinical case metadata.
