@@ -37,6 +37,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--patience", type=int, default=8)
     parser.add_argument("--threshold", type=float, default=0.5)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--split-seed",
+        type=int,
+        default=None,
+        help=(
+            "Optional seed used only to create the grouped inner split. "
+            "When omitted, --seed is used for both splitting and training."
+        ),
+    )
     parser.add_argument("--inner-splits", type=int, default=4)
     parser.add_argument("--inner-fold", type=int, default=0)
     parser.add_argument("--image-size", type=int, nargs=2, default=(224, 224))
@@ -136,12 +145,14 @@ def main() -> int:
     if outer_test["label"].nunique() != 2:
         raise ValueError("Outer test fold must contain both binary classes.")
 
-    # Inner grouped split: the outer test fold remains untouched by model selection.
-    inner_seed = args.seed + (args.fold * 1000)
+    split_base_seed = args.seed if args.split_seed is None else args.split_seed
+    inner_split_seed = split_base_seed + (args.fold * 1000)
+    selection_seed = args.seed + (args.fold * 1000)
+
     inner_assigned = create_grouped_stratified_folds(
         outer_train,
         n_splits=args.inner_splits,
-        seed=inner_seed,
+        seed=inner_split_seed,
     )
     inner_train = inner_assigned[
         inner_assigned["fold"].astype(int) != args.inner_fold
@@ -154,8 +165,7 @@ def main() -> int:
     selection_dir = fold_dir / "selection"
     selection_dir.mkdir(parents=True, exist_ok=True)
 
-    # Stage 1: select the epoch count using only the outer-training partition.
-    set_reproducibility(inner_seed)
+    set_reproducibility(selection_seed)
     selection_train_transform = build_classification_transforms(
         image_size=args.image_size,
         training=True,
@@ -205,7 +215,8 @@ def main() -> int:
             "inner_fold": int(args.inner_fold),
             "inner_splits": int(args.inner_splits),
             "architecture": args.architecture,
-            "seed": int(inner_seed),
+            "training_seed": int(selection_seed),
+            "inner_split_seed": int(inner_split_seed),
             "image_size": list(args.image_size),
             "selection_condition": "original",
         },
@@ -216,8 +227,7 @@ def main() -> int:
     best_epoch = int(improved_rows.iloc[-1]["epoch"])
     print(f"Selected epoch count: {best_epoch}")
 
-    # Stage 2: reinitialize and train on the complete outer-training partition.
-    refit_seed = inner_seed + 500_000
+    refit_seed = selection_seed + 500_000
     set_reproducibility(refit_seed)
     refit_transform = build_classification_transforms(
         image_size=args.image_size,
@@ -263,7 +273,8 @@ def main() -> int:
             "metadata": {
                 "outer_fold": int(args.fold),
                 "architecture": args.architecture,
-                "seed": int(refit_seed),
+                "training_seed": int(refit_seed),
+                "inner_split_seed": int(inner_split_seed),
                 "image_size": list(args.image_size),
                 "training_condition": "original",
                 "outer_test_used_for_selection": False,
@@ -272,7 +283,6 @@ def main() -> int:
         fold_dir / "best_model.pt",
     )
 
-    # Stage 3: paired evaluation on the untouched outer test fold.
     outer_original_loader = _build_loader(
         outer_test,
         condition="original",
@@ -328,6 +338,11 @@ def main() -> int:
         "training_condition": "original",
         "model_selection_condition": "inner_original",
         "outer_test_used_for_selection": False,
+        "base_training_seed": int(args.seed),
+        "selection_seed": int(selection_seed),
+        "refit_seed": int(refit_seed),
+        "inner_split_base_seed": int(split_base_seed),
+        "inner_split_seed": int(inner_split_seed),
         "selected_epochs": int(best_epoch),
         "outer_train_cases": int(len(outer_train)),
         "outer_test_cases": int(len(outer_test)),

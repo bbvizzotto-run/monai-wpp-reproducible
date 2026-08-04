@@ -4,7 +4,7 @@ Reproducible research pipeline for paired evaluation of original and WhatsApp-co
 
 ## Project status
 
-Milestone 4 provides:
+Milestone 6 provides:
 
 - a privacy-preserving paired-image manifest;
 - validation for original-only tooth-level clinical metadata;
@@ -14,15 +14,19 @@ Milestone 4 provides:
 - safe 2-D grayscale image loading;
 - condition-specific and paired datasets;
 - MONAI preprocessing and training-only augmentation;
-- a model factory for ResNet, DenseNet, and EfficientNet;
-- synthetic non-clinical data for smoke tests;
-- nested one-fold training with AdamW, BCEWithLogitsLoss, and early stopping;
+- ImageNet-pretrained ResNet transfer learning with grayscale kernel adaptation;
+- grouped inner epoch selection without outer-test leakage;
 - refitting on the complete outer-training partition;
-- checkpoint, history, metrics, and paired prediction export;
-- similarity-based candidate generation for unnamed image folders;
-- automated tests.
+- paired original/WhatsApp evaluation on untouched outer folds;
+- independent training and inner-split seeds for stability experiments;
+- a resumable Windows runner for additional model seeds;
+- multi-seed out-of-fold consolidation;
+- patient-clustered bootstrap confidence intervals;
+- cross-seed probability stability and consensus analysis;
+- manuscript-oriented tables, figures, metadata, and reports;
+- synthetic non-clinical tests.
 
-ROI validation, controlled WhatsApp acquisition, five-fold training orchestration, paired confidence intervals, calibration analysis, and manuscript figures remain future milestones. No clinical images, direct identifiers, or private clinical manifests belong in this repository.
+Clinical images, direct identifiers, private manifests, checkpoints, prediction tables, and generated clinical reports must remain outside the public repository. Future work includes manuscript integration, external validation, and any separately prespecified model comparisons.
 
 ## Installation
 
@@ -44,7 +48,13 @@ or the complete research environment:
 pip install -e ".[all]"
 ```
 
-Dependency ranges are provisional. Exact versions will be frozen before definitive experiments.
+For statistical analysis without the training stack:
+
+```bash
+pip install -e ".[stats]"
+```
+
+Exact software versions used in definitive experiments should be preserved in the exported run metadata and manuscript.
 
 ## Data model
 
@@ -147,6 +157,43 @@ outputs/training/fold_0/metrics.json
 
 Results obtained from the synthetic dataset are only software smoke tests and have no clinical or scientific interpretation.
 
+## Run seed-stability training on Windows
+
+Use a fixed `SplitSeed` to preserve the grouped inner validation partition while changing the training and augmentation seed:
+
+```powershell
+.\scripts\run_seed_stability.ps1 `
+  -Manifest "C:\protected\metadata\manifest.csv" `
+  -Root "C:\protected\dataset" `
+  -OutputRoot "C:\MONAI\outputs\resnet18_seed_stability" `
+  -Seeds 43,44 `
+  -SplitSeed 42 `
+  -BatchSize 4 `
+  -Epochs 30 `
+  -NumWorkers 0 `
+  -Device cuda
+```
+
+Completed folds are skipped when the command is resumed. The script also creates a lightweight ZIP without model checkpoints.
+
+## Analyze multiple seeds
+
+The final analysis requires one complete result directory per seed. It validates identical cases, patients, labels, and outer folds before calculating any statistics.
+
+```powershell
+python .\scripts\analyze_seed_stability.py `
+  --run "42=C:\MONAI\outputs\resnet18_5fold" `
+  --run "43=C:\MONAI\outputs\resnet18_seed_stability\seed_43" `
+  --run "44=C:\MONAI\outputs\resnet18_seed_stability\seed_44" `
+  --output-dir "C:\MONAI\outputs\resnet18_final_analysis" `
+  --expected-folds 5 `
+  --threshold 0.5 `
+  --bootstrap-repetitions 10000 `
+  --bootstrap-seed 20260804
+```
+
+The analysis produces pooled out-of-fold metrics, paired differences, patient-clustered confidence intervals, cross-seed agreement summaries, model-averaged probabilities, PNG/SVG figures, and a manuscript-oriented report. See `docs/MULTI_SEED_ANALYSIS.md` for the complete output description and interpretation safeguards.
+
 ## Suggest pairs for unnamed folders
 
 ```bash
@@ -167,9 +214,11 @@ The primary experiment is `train_original_evaluate_paired`:
 2. epoch selection uses only original images from grouped inner training and validation partitions;
 3. the final model is refit on every case in the outer-training partition;
 4. paired original and WhatsApp images from the untouched outer test fold are evaluated with the same model and threshold;
-5. case-level out-of-fold probabilities will support paired statistical tests.
+5. case-level out-of-fold probabilities support paired statistical analysis;
+6. patient-clustered resampling preserves bilateral observations within the same bootstrap cluster;
+7. additional training seeds assess stochastic stability without changing outer folds or the inner split.
 
-A later secondary experiment may train separate models for each condition, but its interpretation must remain distinct.
+Any later model, threshold, preprocessing, or training-condition comparison must be labeled as a separate prespecified or exploratory experiment.
 
 ## Run tests
 
@@ -181,13 +230,15 @@ Tests requiring PyTorch or MONAI are skipped when optional training dependencies
 
 ## Research safeguards
 
-- Never commit radiographs, direct identifiers, clinical metadata, or unapproved derived data.
+- Never commit radiographs, direct identifiers, clinical metadata, checkpoints, predictions, or generated private reports.
 - Split by `patient_id`, never by image, crop, tooth, or augmented sample.
 - Apply random augmentation only to training partitions.
 - Keep original and WhatsApp counterparts in the same fold.
 - Never use the outer test fold for early stopping, threshold selection, or hyperparameter selection.
+- Keep the grouped inner split fixed when isolating the effect of model seeds.
 - Never use similarity scores as final pair labels without manual confirmation.
 - Generate final tables and figures directly from saved out-of-fold predictions.
+- Do not claim equivalence or non-inferiority without a prespecified clinical margin.
 
 ## License
 
