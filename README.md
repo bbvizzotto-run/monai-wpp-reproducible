@@ -1,5 +1,7 @@
 # MONAI WhatsApp Radiograph Reproducibility Pipeline
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21894253.svg)](https://doi.org/10.5281/zenodo.21894253)
+
 Reproducible research pipeline for paired evaluation of original and WhatsApp-compressed panoramic radiographs in a binary third-molar–mandibular-canal proximity task.
 
 ## Project status
@@ -239,6 +241,14 @@ Tests requiring PyTorch or MONAI are skipped when optional training dependencies
 - Never use similarity scores as final pair labels without manual confirmation.
 - Generate final tables and figures directly from saved out-of-fold predictions.
 - Do not claim equivalence or non-inferiority without a prespecified clinical margin.
+
+## Citation
+
+If you use this software, please cite the permanently archived version used in the study:
+
+> Vizzotto, B. B. (2026). *Reproducible paired evaluation pipeline for original and WhatsApp-compressed panoramic radiographs* (Version 0.6.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.21894253
+
+Citation metadata are also available in `CITATION.cff`.
 
 ## License
 
