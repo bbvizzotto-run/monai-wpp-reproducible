@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata below."
+title: "Reproducible paired evaluation pipeline for original and WhatsApp-compressed panoramic radiographs"
+type: software
+authors:
+  - family-names: "Vizzotto"
+    given-names: "Bruno Boessio"
+version: 0.6.0
+date-released: 2026-08-11
+repository-code: "https://github.com/bbvizzotto-run/monai-wpp-reproducible"
+license: MIT
